@@ -1,4 +1,5 @@
 {
     "rpc": "http://localhost:8545",
-    "rootWalletPkey": "0xxxx"
+    "rootWalletPkey": "0xxxx",
+    "mainWalletPkey": "0xxxx"
 }

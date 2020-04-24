@@ -15,7 +15,7 @@ describe('TomoX testcases', () => {
     }
     describe(`Test spot trading orderbook and trades`, async () => {
         
-        it(`it should match with good `, async () => {
+        it(`it should work`, async () => {
 
             try {
                 let A = TomoJS.randomWallet() // Trader A
@@ -37,6 +37,7 @@ describe('TomoX testcases', () => {
                 let tomojsI = await TomoJS.setProvider(rpc, I.privateKey)
 
                 let tomojsR = await TomoJS.setProvider(rpc, config.rootWalletPkey)
+                let tomojsM = await TomoJS.setProvider(rpc, config.mainWalletPkey)
 
                 let tomojsA = await TomoJS.setProvider(rpc, A.privateKey)
 
@@ -55,7 +56,6 @@ describe('TomoX testcases', () => {
                 await tomojsR.send({ address: tomojsB.coinbase, value: '1000', nonce: nonce + 2 })
                 await tomojsR.send({ address: tomojsI.coinbase, value: '10000', nonce: nonce + 3 })
                 await tomojsR.send({ address: tomojsLA.coinbase, value: '10000', nonce: nonce + 4 })
-                await tomojsR.send({ address: tomojsLB.coinbase, value: '10000', nonce: nonce + 5 })
 
                 await sleep(5000)
                 console.log(`Issue/ApplyTomoX token...`)
@@ -86,24 +86,24 @@ describe('TomoX testcases', () => {
                     nonce: 0
                 })
 
-                await sleep(5000)
-                console.log(`Add ILO collateral ${token.contractAddress}...`)
-                await tomojsI.tomox.addILOCollateral({
+                console.log(`Add collateral ${token.contractAddress}...`)
+                nonce = await tomojsM.wallet.getTransactionCount()
+                await tomojsM.tomox.addCollateral({
                     token: token.contractAddress,
                     depositRate: 150,
                     liquidationRate: 110,
                     recallRate: 200,
-                    nonce: 2
+                    nonce: nonce
                 })
 
                 await sleep(5000)
-                console.log(`Set ILO collateral price...`)
+                console.log(`Set collateral price...`)
 
-                await tomojsI.tomox.setCollateralPrice({
+                await tomojsM.tomox.setCollateralPrice({
                     token: token.contractAddress,
                     lendingToken: '0x0000000000000000000000000000000000000001',
                     price: new BigNumber(0.1).multipliedBy(1e18).toString(10),
-                    nonce: 3
+                    nonce: nonce + 1
                 })
 
                 await sleep(5000)
@@ -112,7 +112,7 @@ describe('TomoX testcases', () => {
                 await tomojsO.tomox.lendingUpdate({
                     node: C.address,
                     tradeFee: 1,
-                    collateralTokens: [ token.contractAddress ],
+                    collateralTokens: [ '0x0000000000000000000000000000000000000000' ],
                     terms: [ 60 ],
                     lendingTokens: [ '0x0000000000000000000000000000000000000001' ],
                     nonce: 1
@@ -124,7 +124,15 @@ describe('TomoX testcases', () => {
                 await tomojsI.tomoz.transfer({
                     tokenAddress: token.contractAddress,
                     to: A.address,
-                    amount: 1000
+                    amount: 1000,
+                    nonce: 2
+                })
+
+                await tomojsI.tomoz.transfer({
+                    tokenAddress: token.contractAddress,
+                    to: LB.address,
+                    amount: 20000,
+                    nonce: 3
                 })
 
                 await sleep(5000)
@@ -171,7 +179,7 @@ describe('TomoX testcases', () => {
                 })
 
                 console.log(`Lending ...`)
-                await tomojsLA.tomox.createLendingOrder({
+                await tomojsLB.tomox.createLendingOrder({
                     relayerAddress: C.address,
                     collateralToken: token.contractAddress,
                     lendingToken: '0x0000000000000000000000000000000000000001',
