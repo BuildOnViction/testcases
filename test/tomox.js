@@ -55,7 +55,7 @@ describe('TomoX testcases', () => {
                 await tomojsR.send({ address: tomojsA.coinbase, value: '1000', nonce: nonce + 1 })
                 await tomojsR.send({ address: tomojsB.coinbase, value: '1000', nonce: nonce + 2 })
                 await tomojsR.send({ address: tomojsI.coinbase, value: '10000', nonce: nonce + 3 })
-                await tomojsR.send({ address: tomojsLA.coinbase, value: '10000', nonce: nonce + 4 })
+                await tomojsR.send({ address: tomojsLB.coinbase, value: '10000', nonce: nonce + 4 })
 
                 await sleep(5000)
                 console.log(`Issue/ApplyTomoX token...`)
@@ -86,35 +86,58 @@ describe('TomoX testcases', () => {
                     nonce: 0
                 })
 
-                console.log(`Add collateral ${token.contractAddress}...`)
+                console.log(`Add collateral ...`)
                 nonce = await tomojsM.wallet.getTransactionCount()
                 await tomojsM.tomox.addCollateral({
-                    token: token.contractAddress,
+                    token: '0x0000000000000000000000000000000000000001',
                     depositRate: 150,
                     liquidationRate: 110,
                     recallRate: 200,
                     nonce: nonce
                 })
 
-                await sleep(5000)
-                console.log(`Set collateral price...`)
-
-                await tomojsM.tomox.setCollateralPrice({
+                console.log(`Add lending token...`)
+                await tomojsM.tomox.addLendingToken({
                     token: token.contractAddress,
-                    lendingToken: '0x0000000000000000000000000000000000000001',
-                    price: new BigNumber(0.1).multipliedBy(1e18).toString(10),
                     nonce: nonce + 1
                 })
 
+                await tomojsM.tomox.addCollateral({
+                    token: token.contractAddress,
+                    depositRate: 150,
+                    liquidationRate: 110,
+                    recallRate: 200,
+                    nonce: nonce + 2
+                })
+
                 await sleep(5000)
-                console.log(`Lending list token...`)
+                console.log(`Set collateral price...`)
+
+                // Price TOMO/TEST
+                await tomojsM.tomox.setCollateralPrice({
+                    token: '0x0000000000000000000000000000000000000001',
+                    lendingToken: token.contractAddress,
+                    price: new BigNumber(10).multipliedBy(1e18).toString(10),
+                    nonce: nonce + 3
+                })
+
+                // Price TEST/TOMO
+                await tomojsM.tomox.setCollateralPrice({
+                    lendingToken: '0x0000000000000000000000000000000000000001',
+                    token: token.contractAddress,
+                    price: new BigNumber(0.1).multipliedBy(1e18).toString(10),
+                    nonce: nonce + 4
+                })
+
+                await sleep(5000)
+                console.log(`Lending list token ${token.contractAddress}...`)
 
                 await tomojsO.tomox.lendingUpdate({
                     node: C.address,
                     tradeFee: 1,
                     collateralTokens: [ '0x0000000000000000000000000000000000000000' ],
                     terms: [ 60 ],
-                    lendingTokens: [ '0x0000000000000000000000000000000000000001' ],
+                    lendingTokens: [ token.contractAddress ],
                     nonce: 1
                 })
 
@@ -130,7 +153,7 @@ describe('TomoX testcases', () => {
 
                 await tomojsI.tomoz.transfer({
                     tokenAddress: token.contractAddress,
-                    to: LB.address,
+                    to: LA.address,
                     amount: 20000,
                     nonce: 3
                 })
@@ -181,22 +204,46 @@ describe('TomoX testcases', () => {
                 console.log(`Lending ...`)
                 await tomojsLB.tomox.createLendingOrder({
                     relayerAddress: C.address,
-                    collateralToken: token.contractAddress,
-                    lendingToken: '0x0000000000000000000000000000000000000001',
+                    lendingToken: token.contractAddress,
+                    collateralToken: '0x0000000000000000000000000000000000000001',
+                    term: 60,
+                    interest: 8.5,
+                    quantity: 1000,
+                    side: 'BORROW',
+                    nonce: 0
+                })
+
+                await tomojsLB.tomox.createLendingOrder({
+                    relayerAddress: C.address,
+                    lendingToken: token.contractAddress,
+                    collateralToken: '0x0000000000000000000000000000000000000001',
                     term: 60,
                     interest: 9,
                     quantity: 1000,
                     side: 'BORROW',
+                    nonce: 1
                 })
 
                 await tomojsLA.tomox.createLendingOrder({
                     relayerAddress: C.address,
-                    collateralToken: token.contractAddress,
-                    lendingToken: '0x0000000000000000000000000000000000000001',
+                    lendingToken: token.contractAddress,
+                    collateralToken: '0x0000000000000000000000000000000000000001',
                     term: 60,
                     interest: 9,
                     quantity: 1000,
-                    side: 'INVEST'
+                    side: 'INVEST',
+                    nonce: 0
+                })
+
+                await tomojsLA.tomox.createLendingOrder({
+                    relayerAddress: C.address,
+                    lendingToken: token.contractAddress,
+                    collateralToken: '0x0000000000000000000000000000000000000001',
+                    term: 60,
+                    interest: 10,
+                    quantity: 1000,
+                    side: 'INVEST',
+                    nonce: 1
                 })
 
                 await sleep(5000)
@@ -211,17 +258,75 @@ describe('TomoX testcases', () => {
                 let bids = tomojsR.tomox.getBids( token.contractAddress, '0x0000000000000000000000000000000000000001' )
                 let asks = tomojsR.tomox.getAsks( token.contractAddress, '0x0000000000000000000000000000000000000001' )
 
-                expect((await relayer).deposit).to.equal('24999998000000000000000')
+                let borrows = tomojsR.tomox.getBorrows( token.contractAddress, 60 )
+                let invests = tomojsR.tomox.getInvests( token.contractAddress, 60 )
+
+                // expect((await relayer).deposit).to.equal('24999998000000000000000')
+                console.log('relayer', (await relayer).deposit)
+                console.log('bO', (await bO).toString())
+                console.log('borrows', await borrows)
+                console.log('invests', await invests)
+
+                console.log('TOMO LA', await tomojsLA.getBalance())
+                console.log('TOMO LB', await tomojsLB.getBalance())
+                console.log('Token LA', await tomojsLA.tomoz.balanceOf({ tokenAddress: token.contractAddress }))
+                console.log('Token LB',await tomojsLB.tomoz.balanceOf({ tokenAddress: token.contractAddress }))
 
                 expect((await bids)['90000000000000000']).to.equal(100000000000000000000)
                 expect((await asks)['110000000000000000']).to.equal(100000000000000000000)
 
                 expect((await bA).toString()).to.equal('1009.99')
                 expect((await bB).toString()).to.equal('989.99')
-                console.log((await bO).toString())
 
                 expect((await bTA).balance.toString()).to.equal('900')
                 expect((await bTB).balance.toString()).to.equal('100')
+
+                let lendingTrades = await tomojsR.tomox.getLendingTradesByAddress(token.contractAddress, 60, tomojsLB.coinbase)
+
+                console.log('Topup lending trade ...')
+                await tomojsLB.tomox.topupLendingTrade({
+                    relayerAddress: C.address,
+                    lendingToken: token.contractAddress,
+                    collateralToken: '0x0000000000000000000000000000000000000001',
+                    term: 60,
+                    quantity: 10,
+                    tradeId: lendingTrades[0].tradeId
+                })
+
+                await sleep(5000)
+
+                console.log('TOMO LA', await tomojsLA.getBalance())
+                console.log('TOMO LB', await tomojsLB.getBalance())
+                console.log('Token LA', await tomojsLA.tomoz.balanceOf({ tokenAddress: token.contractAddress }))
+                console.log('Token LB',await tomojsLB.tomoz.balanceOf({ tokenAddress: token.contractAddress }))
+
+                console.log('Transfer TRC21 token ...')
+                await tomojsI.tomoz.transfer({
+                    tokenAddress: token.contractAddress,
+                    to: LB.address,
+                    amount: 11
+                })
+
+                await sleep(5000)
+                console.log('Repay lending trade ...')
+                await tomojsLB.tomox.repayLendingTrade({
+                    relayerAddress: C.address,
+                    lendingToken: token.contractAddress,
+                    collateralToken: '0x0000000000000000000000000000000000000001',
+                    term: 60,
+                    tradeId: lendingTrades[0].tradeId
+                })
+
+                await sleep(5000)
+                console.log('TOMO LA', await tomojsLA.getBalance())
+                console.log('TOMO LB', await tomojsLB.getBalance())
+                console.log('Token LA', await tomojsLA.tomoz.balanceOf({ tokenAddress: token.contractAddress }))
+                console.log('Token LB',await tomojsLB.tomoz.balanceOf({ tokenAddress: token.contractAddress }))
+
+
+                console.log('Cancel spot trading order...')
+                console.log(await tomojsA.tomox.getOrdersByAddress(token.contractAddress, '0x0000000000000000000000000000000000000001'))
+                console.log('Cancel lending order...')
 
             } catch (e) {
                 console.log(e)
