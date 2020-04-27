@@ -238,120 +238,8 @@ describe('TomoX testcases', () => {
                 })
 
                 await sleep(5000)
-
-                let relayer = tomojsO.tomox.getRelayerByAddress(C.address)
-                let bA = tomojsA.getBalance()
-                let bB = tomojsB.getBalance()
-                let bO = tomojsO.getBalance()
-                let bTA = tomojsA.tomoz.balanceOf({ tokenAddress: token.contractAddress })
-                let bTB = tomojsB.tomoz.balanceOf({ tokenAddress: token.contractAddress })
-
-                let bids = tomojsR.tomox.getBids( token.contractAddress, '0x0000000000000000000000000000000000000001' )
-                let asks = tomojsR.tomox.getAsks( token.contractAddress, '0x0000000000000000000000000000000000000001' )
-
-                let borrows = tomojsR.tomox.getBorrows( token.contractAddress, term )
-                let invests = tomojsR.tomox.getInvests( token.contractAddress, term )
-
-                // expect((await relayer).deposit).to.equal('24999998000000000000000')
-                console.log('TOMO O', await tomojsO.getBalance())
-                console.log('Token O', await tomojsO.tomoz.balanceOf({ tokenAddress: token.contractAddress }))
-
-                console.log('relayer', (await relayer).deposit)
-                console.log('bO', (await bO).toString())
-                console.log('borrows', await borrows)
-                console.log('invests', await invests)
-
-                console.log('TOMO LA', await tomojsLA.getBalance())
-                console.log('TOMO LB', await tomojsLB.getBalance())
-                console.log('Token LA', await tomojsLA.tomoz.balanceOf({ tokenAddress: token.contractAddress }))
-                console.log('Token LB',await tomojsLB.tomoz.balanceOf({ tokenAddress: token.contractAddress }))
-
-                expect((await bids)['90000000000000000']).to.equal(100000000000000000000)
-                expect((await asks)['110000000000000000']).to.equal(100000000000000000000)
-
-                expect((await tomojsO.tomoz.balanceOf({ tokenAddress: token.contractAddress })).balance).to.equal('10', 'wrong Relayer Owner TOMO balance')
-                expect((await tomojsO.tomox.getRelayerByAddress(C.address)).deposit).to.equal('24999988000000000000000', 'wrong Relayer Deposit')
-
-                expect((await bA).toString()).to.equal('1009.99')
-                expect((await bB).toString()).to.equal('989.99')
-
-                expect((await bTA).balance.toString()).to.equal('900')
-                expect((await bTB).balance.toString()).to.equal('100')
-
-                console.log('Cancel SELL order...')
-                let orders = await tomojsA.tomox.getOrdersByAddress(token.contractAddress, '0x0000000000000000000000000000000000000001')
-                await tomojsA.tomox.cancelOrder({
-                    exchangeAddress: C.address,
-                    baseToken: orders[0].baseToken,
-                    quoteToken: orders[0].quoteToken,
-                    orderHash: orders[0].hash,
-                    orderId: orders[0].orderID
-                })
-
-                console.log('Cancel BUY order...')
-                orders = await tomojsB.tomox.getOrdersByAddress(token.contractAddress, '0x0000000000000000000000000000000000000001')
-                await tomojsB.tomox.cancelOrder({
-                    exchangeAddress: C.address,
-                    baseToken: orders[0].baseToken,
-                    quoteToken: orders[0].quoteToken,
-                    orderHash: orders[0].hash,
-                    orderId: orders[0].orderID
-                })
-
-                console.log('Cancel BORROW order...')
-                let lorders = await tomojsLB.tomox.getLendingOrdersByAddress(token.contractAddress, term)
-                await tomojsLB.tomox.cancelLendingOrder({
-                    relayerAddress: C.address,
-                    lendingToken: lorders[0].lendingToken,
-                    term: lorders[0].term,
-                    interest: lorders[0].interest,
-                    lendingId: lorders[0].lendingId,
-                    hash: lorders[0].hash
-                })
-
-                console.log('Cancel INVEST order...')
-                lorders = await tomojsLA.tomox.getLendingOrdersByAddress(token.contractAddress, term)
-                await tomojsLA.tomox.cancelLendingOrder({
-                    relayerAddress: C.address,
-                    lendingToken: lorders[0].lendingToken,
-                    term: lorders[0].term,
-                    interest: lorders[0].interest,
-                    lendingId: lorders[0].lendingId,
-                    hash: lorders[0].hash
-                })
-
-                await sleep(5000)
-                expect(await tomojsA.getBalance()).to.equal('1009.99')
-                expect((await tomojsA.tomoz.balanceOf({ tokenAddress: token.contractAddress })).balance).to.equal('899.99')
-
-                console.log(await tomojsB.getBalance())
-                console.log(await tomojsA.tomoz.balanceOf({ tokenAddress: token.contractAddress }))
-
-                console.log('TOMO LA', await tomojsLA.getBalance())
-                console.log('Token LA', await tomojsLA.tomoz.balanceOf({ tokenAddress: token.contractAddress }))
-                console.log('TOMO LB', await tomojsLB.getBalance())
-                console.log('Token LB', await tomojsLB.tomoz.balanceOf({ tokenAddress: token.contractAddress }))
-
-                let lendingTrades = await tomojsR.tomox.getLendingTradesByAddress(token.contractAddress, term, tomojsLB.coinbase)
-
-                console.log('Topup lending trade ...')
-                await tomojsLB.tomox.topupLendingTrade({
-                    relayerAddress: C.address,
-                    lendingToken: token.contractAddress,
-                    collateralToken: '0x0000000000000000000000000000000000000001',
-                    term: term,
-                    quantity: 10,
-                    tradeId: lendingTrades[0].tradeId
-                })
-
-                await sleep(5000)
-
-                console.log('TOMO LA', await tomojsLA.getBalance())
-                console.log('TOMO LB', await tomojsLB.getBalance())
-                console.log('Token LA', await tomojsLA.tomoz.balanceOf({ tokenAddress: token.contractAddress }))
-                console.log('Token LB',await tomojsLB.tomoz.balanceOf({ tokenAddress: token.contractAddress }))
-
                 console.log('Transfer TRC21 token ...')
+
                 await tomojsI.tomoz.transfer({
                     tokenAddress: token.contractAddress,
                     to: LB.address,
@@ -359,20 +247,13 @@ describe('TomoX testcases', () => {
                 })
 
                 await sleep(5000)
-                console.log('Repay lending trade ...')
-                await tomojsLB.tomox.repayLendingTrade({
-                    relayerAddress: C.address,
-                    lendingToken: token.contractAddress,
-                    collateralToken: '0x0000000000000000000000000000000000000001',
-                    term: term,
-                    tradeId: lendingTrades[0].tradeId
-                })
-
-                await sleep(5000)
-                console.log('TOMO LA', await tomojsLA.getBalance())
-                console.log('TOMO LB', await tomojsLB.getBalance())
-                console.log('Token LA', await tomojsLA.tomoz.balanceOf({ tokenAddress: token.contractAddress }))
-                console.log('Token LB',await tomojsLB.tomoz.balanceOf({ tokenAddress: token.contractAddress }))
+                while(true) {
+                    let blockNumber = parseInt(await tomojsM.tomo.getBlockNumber())
+                    console.log('Waiting for the auto-repay happens', blockNumber, blockNumber % 900)
+                    console.log('TOMO LB', await tomojsLB.getBalance())
+                    console.log('Token LB', (await tomojsLB.tomoz.balanceOf({ tokenAddress: token.contractAddress })).balance)
+                    await sleep(5000)
+                }
 
 
             } catch (e) {
