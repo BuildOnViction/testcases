@@ -19,6 +19,8 @@ describe('TomoX testcases', () => {
 
             try {
                 let term = 60
+                let tomoNative = '0x0000000000000000000000000000000000000001'
+                let lockAddress= '0x0000000000000000000000000000000000000011'
 
                 let A = TomoJS.randomWallet() // Trader A
 
@@ -84,14 +86,14 @@ describe('TomoX testcases', () => {
                     node: C.address,
                     tradeFee: 0.1,
                     baseTokens: [ token.contractAddress ],
-                    quoteTokens: [ '0x0000000000000000000000000000000000000001' ],
+                    quoteTokens: [ tomoNative ],
                     nonce: 0
                 })
 
                 console.log(`Add collateral ...`)
                 nonce = await tomojsM.wallet.getTransactionCount()
                 await tomojsM.tomox.addCollateral({
-                    token: '0x0000000000000000000000000000000000000001',
+                    token: tomoNative,
                     depositRate: 150,
                     liquidationRate: 110,
                     recallRate: 200,
@@ -109,7 +111,7 @@ describe('TomoX testcases', () => {
 
                 // Price TOMO/TEST
                 await tomojsM.tomox.setCollateralPrice({
-                    token: '0x0000000000000000000000000000000000000001',
+                    token: tomoNative,
                     lendingToken: token.contractAddress,
                     price: new BigNumber(10).multipliedBy(1e18).toString(10),
                     nonce: nonce + 2
@@ -147,6 +149,8 @@ describe('TomoX testcases', () => {
                 await sleep(5000)
 
                 console.log('TOMO O', await tomojsO.getBalance())
+                let step0LockAddressTOMOBalance = new BigNumber(await tomojsO.getBalance(lockAddress)).multipliedBy(10 ** 18)
+
                 expect((await tomojsO.tomoz.balanceOf({ tokenAddress: token.contractAddress })).balance).to.equal('0', 'wrong Relayer Owner TOMO balance')
                 expect((await tomojsO.tomox.getRelayerByAddress(C.address)).deposit).to.equal('25000000000000000000000', 'wrong Relayer Deposit')
 
@@ -157,7 +161,7 @@ describe('TomoX testcases', () => {
                     price: 0.11,
                     side: 'SELL',
                     amount: 100,
-                    quoteToken: '0x0000000000000000000000000000000000000001',
+                    quoteToken: tomoNative,
                     baseToken: token.contractAddress,
                     nonce: 0
                 })
@@ -167,7 +171,7 @@ describe('TomoX testcases', () => {
                     price: 0.1,
                     side: 'SELL',
                     amount: 100,
-                    quoteToken: '0x0000000000000000000000000000000000000001',
+                    quoteToken: tomoNative,
                     baseToken: token.contractAddress,
                     nonce: 1
                 })
@@ -177,7 +181,7 @@ describe('TomoX testcases', () => {
                     price: 0.09,
                     side: 'BUY',
                     amount: 100,
-                    quoteToken: '0x0000000000000000000000000000000000000001',
+                    quoteToken: tomoNative,
                     baseToken: token.contractAddress,
                     nonce: 0
                 })
@@ -187,7 +191,7 @@ describe('TomoX testcases', () => {
                     price: 0.1,
                     side: 'BUY',
                     amount: 100,
-                    quoteToken: '0x0000000000000000000000000000000000000001',
+                    quoteToken: tomoNative,
                     baseToken: token.contractAddress,
                     nonce: 1
                 })
@@ -196,7 +200,7 @@ describe('TomoX testcases', () => {
                 await tomojsLB.tomox.createLendingOrder({
                     relayerAddress: C.address,
                     lendingToken: token.contractAddress,
-                    collateralToken: '0x0000000000000000000000000000000000000001',
+                    collateralToken: tomoNative,
                     term: term,
                     interest: 8.5,
                     quantity: 1000,
@@ -207,7 +211,7 @@ describe('TomoX testcases', () => {
                 await tomojsLB.tomox.createLendingOrder({
                     relayerAddress: C.address,
                     lendingToken: token.contractAddress,
-                    collateralToken: '0x0000000000000000000000000000000000000001',
+                    collateralToken: tomoNative,
                     term: term,
                     interest: 9,
                     quantity: 1000,
@@ -218,7 +222,7 @@ describe('TomoX testcases', () => {
                 await tomojsLA.tomox.createLendingOrder({
                     relayerAddress: C.address,
                     lendingToken: token.contractAddress,
-                    collateralToken: '0x0000000000000000000000000000000000000001',
+                    collateralToken: tomoNative,
                     term: term,
                     interest: 9,
                     quantity: 1000,
@@ -229,7 +233,7 @@ describe('TomoX testcases', () => {
                 await tomojsLA.tomox.createLendingOrder({
                     relayerAddress: C.address,
                     lendingToken: token.contractAddress,
-                    collateralToken: '0x0000000000000000000000000000000000000001',
+                    collateralToken: tomoNative,
                     term: term,
                     interest: 10,
                     quantity: 1000,
@@ -246,13 +250,18 @@ describe('TomoX testcases', () => {
                 let bTA = tomojsA.tomoz.balanceOf({ tokenAddress: token.contractAddress })
                 let bTB = tomojsB.tomoz.balanceOf({ tokenAddress: token.contractAddress })
 
-                let bids = tomojsR.tomox.getBids( token.contractAddress, '0x0000000000000000000000000000000000000001' )
-                let asks = tomojsR.tomox.getAsks( token.contractAddress, '0x0000000000000000000000000000000000000001' )
+                let bids = tomojsR.tomox.getBids( token.contractAddress, tomoNative )
+                let asks = tomojsR.tomox.getAsks( token.contractAddress, tomoNative )
 
                 let borrows = tomojsR.tomox.getBorrows( token.contractAddress, term )
                 let invests = tomojsR.tomox.getInvests( token.contractAddress, term )
 
                 // expect((await relayer).deposit).to.equal('24999998000000000000000')
+                console.log('TOMO LOCK', await tomojsO.getBalance(lockAddress))
+                let step1LockAddressTOMOBalance = new BigNumber(await tomojsO.getBalance(lockAddress)).multipliedBy(10 ** 18)
+
+                console.log(step1LockAddressTOMOBalance.minus(step0LockAddressTOMOBalance).dividedBy(10 ** 18).toString(10))
+
                 console.log('TOMO O', await tomojsO.getBalance())
                 console.log('Token O', await tomojsO.tomoz.balanceOf({ tokenAddress: token.contractAddress }))
 
@@ -279,7 +288,7 @@ describe('TomoX testcases', () => {
                 expect((await bTB).balance.toString()).to.equal('100')
 
                 console.log('Cancel SELL order...')
-                let orders = await tomojsA.tomox.getOrdersByAddress(token.contractAddress, '0x0000000000000000000000000000000000000001')
+                let orders = await tomojsA.tomox.getOrdersByAddress(token.contractAddress, tomoNative)
                 await tomojsA.tomox.cancelOrder({
                     exchangeAddress: C.address,
                     baseToken: orders[0].baseToken,
@@ -289,7 +298,7 @@ describe('TomoX testcases', () => {
                 })
 
                 console.log('Cancel BUY order...')
-                orders = await tomojsB.tomox.getOrdersByAddress(token.contractAddress, '0x0000000000000000000000000000000000000001')
+                orders = await tomojsB.tomox.getOrdersByAddress(token.contractAddress, tomoNative)
                 await tomojsB.tomox.cancelOrder({
                     exchangeAddress: C.address,
                     baseToken: orders[0].baseToken,
@@ -338,7 +347,7 @@ describe('TomoX testcases', () => {
                 await tomojsLB.tomox.topupLendingTrade({
                     relayerAddress: C.address,
                     lendingToken: token.contractAddress,
-                    collateralToken: '0x0000000000000000000000000000000000000001',
+                    collateralToken: tomoNative,
                     term: term,
                     quantity: 10,
                     tradeId: lendingTrades[0].tradeId
@@ -363,7 +372,7 @@ describe('TomoX testcases', () => {
                 await tomojsLB.tomox.repayLendingTrade({
                     relayerAddress: C.address,
                     lendingToken: token.contractAddress,
-                    collateralToken: '0x0000000000000000000000000000000000000001',
+                    collateralToken: tomoNative,
                     term: term,
                     tradeId: lendingTrades[0].tradeId
                 })
