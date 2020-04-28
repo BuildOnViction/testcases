@@ -35,4 +35,4 @@ npm run test/tomox.js
 # Test manual repay
 ```
 
-You also create your own test cases
+You also can create your own test cases
