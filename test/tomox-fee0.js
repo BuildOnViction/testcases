@@ -21,8 +21,8 @@ describe('TomoX testcases', () => {
                 let term = 86400
                 let tomoNative = '0x0000000000000000000000000000000000000001'
                 let lockAddress= '0x0000000000000000000000000000000000000011'
-                let tradeFee = 0.1
-                let lendFee = 1
+                let tradeFee = 0
+                let lendFee = 0
                 let tradeMatchedPrice = 0.1
 
                 let A = TomoJS.randomWallet() // Trader A
@@ -266,7 +266,7 @@ describe('TomoX testcases', () => {
 
                 expect(step1OwnerTOMOBalance.minus(step0OwnerTOMOBalance).dividedBy(10 ** 18).toString(10)).to.equal(String(tradeMatchedPrice * 100 * 2 * tradeFee / 100), 'Step 1: wrong owner TOMO balance')
 
-                expect((await tomojsO.tomoz.balanceOf({ tokenAddress: token.contractAddress })).balance).to.equal('10', 'Step 1: wrong owner Token balance')
+                expect((await tomojsO.tomoz.balanceOf({ tokenAddress: token.contractAddress })).balance).to.equal(String(0.1 * 1000 * lendFee / 100), 'Step 1: wrong owner Token balance')
 
                 expect((await borrows)['850000000'].toString(10)).to.equal('1e+21', 'Step 1: wrong borrows orderbook')
                 expect((await invests)['1000000000'].toString(10)).to.equal('1e+21', 'Step 1: wrong borrows orderbook')
@@ -278,15 +278,15 @@ describe('TomoX testcases', () => {
                 expect((await tomojsLA.tomoz.balanceOf({ tokenAddress: token.contractAddress })).balance).to.equal('19000', 'Step 1: wrong lender token balance')
 
                 expect(await tomojsLB.getBalance()).to.equal('9850.0', 'Step 1: wrong borrower TOMO balance')
-                expect((await tomojsLB.tomoz.balanceOf({ tokenAddress: token.contractAddress })).balance).to.equal('990', 'Step 1: wrong borrower TOMO balance')
+                expect((await tomojsLB.tomoz.balanceOf({ tokenAddress: token.contractAddress })).balance).to.equal('1000', 'Step 1: wrong borrower TOMO balance')
 
-                expect((await tomojsO.tomoz.balanceOf({ tokenAddress: token.contractAddress })).balance).to.equal('10', 'Step 1: wrong Relayer Owner TOMO balance')
+                expect((await tomojsO.tomoz.balanceOf({ tokenAddress: token.contractAddress })).balance).to.equal('0', 'Step 1: wrong Relayer Owner TOMO balance')
                 expect((await tomojsO.tomox.getRelayerByAddress(C.address)).deposit).to.equal('24999988000000000000000', 'Step 1: wrong Relayer Deposit')
 
-                expect((await bA).toString()).to.equal('1009.99', 'Step 1: wrong seller TOMO balance')
+                expect((await bA).toString()).to.equal('1010.0', 'Step 1: wrong seller TOMO balance')
                 expect((await bTA).balance.toString()).to.equal('900', 'Step 1: rong seller token balance')
 
-                expect((await bB).toString()).to.equal('989.99', 'Step 1: wrong buyer TOMO balance')
+                expect((await bB).toString()).to.equal('990.0', 'Step 1: wrong buyer TOMO balance')
                 expect((await bTB).balance.toString()).to.equal('100', 'Step 1: wrong buyer token balance')
 
                 console.log('Cancel SELL order...')
@@ -332,68 +332,17 @@ describe('TomoX testcases', () => {
                 })
 
                 await sleep(5000)
-                expect(await tomojsA.getBalance()).to.equal('1009.99', 'Step 2: wrong seller TOMO balnce')
-                expect((await tomojsA.tomoz.balanceOf({ tokenAddress: token.contractAddress })).balance).to.equal('899.99', 'Step 2: wrong seller token balance')
+                expect(await tomojsA.getBalance()).to.equal('1010.0', 'Step 2: wrong seller TOMO balnce')
+                expect((await tomojsA.tomoz.balanceOf({ tokenAddress: token.contractAddress })).balance).to.equal('900', 'Step 2: wrong seller token balance')
 
-                expect(await tomojsB.getBalance()).to.equal('989.9891', 'Step 2: wrong buyer TOMO balnce')
+                expect(await tomojsB.getBalance()).to.equal('990.0', 'Step 2: wrong buyer TOMO balnce')
                 expect((await tomojsB.tomoz.balanceOf({ tokenAddress: token.contractAddress })).balance).to.equal('100', 'Step 2: wrong buyer token balance')
 
                 expect(await tomojsLA.getBalance()).to.equal('0.0', 'Step 2: wrong lender TOMO balance')
-                expect((await tomojsLA.tomoz.balanceOf({ tokenAddress: token.contractAddress })).balance).to.equal('18999', 'Step 2: wrong lender token balance')
+                expect((await tomojsLA.tomoz.balanceOf({ tokenAddress: token.contractAddress })).balance).to.equal('19000', 'Step 2: wrong lender token balance')
 
-                expect(await tomojsLB.getBalance()).to.equal('9849.9', 'Step 2: wrong borrower TOMO balance')
-                expect((await tomojsLB.tomoz.balanceOf({ tokenAddress: token.contractAddress })).balance).to.equal('990', 'Step 2: wrong borrower token balance')
-
-                let lendingTrades = await tomojsR.tomox.getLendingTradesByAddress(token.contractAddress, term, tomojsLB.coinbase)
-
-                console.log('Topup lending trade ...')
-                await tomojsLB.tomox.topupLendingTrade({
-                    relayerAddress: C.address,
-                    lendingToken: token.contractAddress,
-                    collateralToken: tomoNative,
-                    term: term,
-                    quantity: 10,
-                    tradeId: lendingTrades[0].tradeId
-                })
-
-                await sleep(5000)
-
-                expect(await tomojsLA.getBalance()).to.equal('0.0', 'Step 3: wrong lender TOMO balance')
-                expect((await tomojsLA.tomoz.balanceOf({ tokenAddress: token.contractAddress })).balance).to.equal('18999', 'Step 3: wrong lender token balance')
-
-                expect(await tomojsLB.getBalance()).to.equal('9839.9', 'Step 3: wrong borrower TOMO balance')
-                expect((await tomojsLB.tomoz.balanceOf({ tokenAddress: token.contractAddress })).balance).to.equal('990', 'Step 3: wrong borrower token balance')
-
-                let step3LockAddressTOMOBalance = new BigNumber(await tomojsO.getBalance(lockAddress)).multipliedBy(10 ** 18)
-                expect(step3LockAddressTOMOBalance.minus(step1LockAddressTOMOBalance).dividedBy(10 ** 18).toString(10)).to.equal('10', 'Step 3: wrong lock lending TOMO balance')
-                
-                console.log('Transfer TRC21 token ...')
-                await tomojsI.tomoz.transfer({
-                    tokenAddress: token.contractAddress,
-                    to: LB.address,
-                    amount: 11
-                })
-
-                await sleep(5000)
-                console.log('Repay lending trade ...')
-                await tomojsLB.tomox.repayLendingTrade({
-                    relayerAddress: C.address,
-                    lendingToken: token.contractAddress,
-                    collateralToken: tomoNative,
-                    term: term,
-                    tradeId: lendingTrades[0].tradeId
-                })
-
-                await sleep(5000)
-
-                let step4LockAddressTOMOBalance = new BigNumber(await tomojsO.getBalance(lockAddress)).multipliedBy(10 ** 18)
-                expect(step3LockAddressTOMOBalance.minus(step4LockAddressTOMOBalance).dividedBy(10 ** 18).toString(10)).to.equal('160', 'Step 4: wrong lock lending TOMO balance')
-
-                expect(await tomojsLA.getBalance()).to.equal('0.0', 'Step 4: wrong lender TOMO balance')
-                expect((await tomojsLA.tomoz.balanceOf({ tokenAddress: token.contractAddress })).balance.substring(0, 9)).to.equal('19999.123', 'Step 4: wrong lender token balance')
-
-                expect(await tomojsLB.getBalance()).to.equal('9999.9', 'Step 4: wrong borrower TOMO balance')
-                expect((await tomojsLB.tomoz.balanceOf({ tokenAddress: token.contractAddress })).balance.substring(0, 6)).to.equal('0.8766', 'Step 4: wrong borrower token balance')
+                expect(await tomojsLB.getBalance()).to.equal('9850.0', 'Step 2: wrong borrower TOMO balance')
+                expect((await tomojsLB.tomoz.balanceOf({ tokenAddress: token.contractAddress })).balance).to.equal('1000', 'Step 2: wrong borrower token balance')
 
             } catch (e) {
                 console.log(e)
