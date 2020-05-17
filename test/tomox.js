@@ -280,7 +280,6 @@ describe('TomoX testcases', () => {
                 expect(await tomojsLB.getBalance()).to.equal('9850.0', 'Step 1: wrong borrower TOMO balance')
                 expect((await tomojsLB.tomoz.balanceOf({ tokenAddress: token.contractAddress })).balance).to.equal('990', 'Step 1: wrong borrower TOMO balance')
 
-                expect((await tomojsO.tomoz.balanceOf({ tokenAddress: token.contractAddress })).balance).to.equal('10', 'Step 1: wrong Relayer Owner TOMO balance')
                 expect((await tomojsO.tomox.getRelayerByAddress(C.address)).deposit).to.equal('24999988000000000000000', 'Step 1: wrong Relayer Deposit')
 
                 expect((await bA).toString()).to.equal('1009.99', 'Step 1: wrong seller TOMO balance')
