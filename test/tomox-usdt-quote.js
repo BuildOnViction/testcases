@@ -20,6 +20,10 @@ describe('TomoX testcases', () => {
     - Issue token
     - Create BUY/SELL orders
     - Matched
+
+    Checks:
+    - Relayer owner balance
+    - Relayer deposited balanced
     `, async () => {
         
         it(`it should work`, async () => {

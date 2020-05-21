@@ -14,12 +14,19 @@ describe('TomoX testcases', () => {
         return
     }
     describe(`
-    Test basic lending
+    Test basic lending cases
     Steps:
     - Create a relayer
     - Issue token
     - Create BORROW/INVEST orders
     - Matched
+
+    Checks:
+    - Orderbook
+    - Lender balances
+    - Borrower balances
+    - Relayer owner balance
+    - Relayer deposited balance
     `, async () => {
         
         it(`it should work`, async () => {
@@ -221,7 +228,7 @@ describe('TomoX testcases', () => {
                 expect((await tomojsLA.tomoz.balanceOf({ tokenAddress: token.contractAddress })).balance).to.equal('19000', 'Step 1: wrong lender token balance')
 
                 expect(await tomojsLB.getBalance()).to.equal('9850.0', 'Step 1: wrong borrower TOMO balance')
-                expect((await tomojsLB.tomoz.balanceOf({ tokenAddress: token.contractAddress })).balance).to.equal('990', 'Step 1: wrong borrower TOMO balance')
+                expect((await tomojsLB.tomoz.balanceOf({ tokenAddress: token.contractAddress })).balance).to.equal('990', 'Step 1: wrong borrower Token balance')
 
                 expect((await tomojsO.tomox.getRelayerByAddress(C.address)).deposit).to.equal('24999990000000000000000', 'Step 1: wrong Relayer Deposit')
 

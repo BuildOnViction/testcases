@@ -13,9 +13,19 @@ describe('TomoX testcases', () => {
     if (!rpc) {
         return
     }
-    describe(`Test spot trading orderbook and trades`, async () => {
+    describe(`
+    Test general cases with trade fee, lending fee is zero
+    Steps:
+    - Create a relayer
+    - Issue Token
+    - Create lending, trading orders
+    - Matched
+    - Cancel lending, trading order
+    - Manually Topup
+    - Manually Repay
+    `, async () => {
         
-        it(`it should work`, async () => {
+        it(`It should work`, async () => {
 
             try {
                 let term = 86400
