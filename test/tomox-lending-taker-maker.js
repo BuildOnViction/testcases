@@ -13,7 +13,14 @@ describe('TomoX testcases', () => {
     if (!rpc) {
         return
     }
-    describe(`Test spot trading orderbook and trades`, async () => {
+    describe(`
+    Test basic lending
+    Steps:
+    - Create a relayer
+    - Issue token
+    - Create BORROW/INVEST orders
+    - Matched
+    `, async () => {
         
         it(`it should work`, async () => {
 
@@ -23,6 +30,7 @@ describe('TomoX testcases', () => {
                 let lockAddress= '0x0000000000000000000000000000000000000011'
                 let tradeFee = 0.1
                 let lendFee = 1
+                let tokenDecimals = 8
 
                 let LA = TomoJS.randomWallet() // Lender A
 
@@ -61,7 +69,7 @@ describe('TomoX testcases', () => {
                     name: 'TEST',
                     symbol: 'TEST',
                     totalSupply: '100000',
-                    decimals: 18,
+                    decimals: tokenDecimals,
                     nonce: 0
                 })
 
@@ -106,7 +114,7 @@ describe('TomoX testcases', () => {
                 await tomojsM.tomox.setCollateralPrice({
                     token: tomoNative,
                     lendingToken: token.contractAddress,
-                    price: new BigNumber(10).multipliedBy(1e18).toString(10),
+                    price: new BigNumber(10).multipliedBy(10 ** tokenDecimals).toString(10),
                     nonce: nonce + 2
                 })
 
@@ -134,13 +142,37 @@ describe('TomoX testcases', () => {
 
                 await sleep(5000)
 
-                let step0OwnerTOMOBalance = new BigNumber(await tomojsO.getBalance()).multipliedBy(10 ** 18)
-                let step0LockAddressTOMOBalance = new BigNumber(await tomojsO.getBalance(lockAddress)).multipliedBy(10 ** 18)
+                let step0OwnerTOMOBalance = new BigNumber(await tomojsO.getBalance()).multipliedBy(10 ** tokenDecimals)
+                let step0LockAddressTOMOBalance = new BigNumber(await tomojsO.getBalance(lockAddress)).multipliedBy(10 ** tokenDecimals)
 
-                expect((await tomojsO.tomoz.balanceOf({ tokenAddress: token.contractAddress })).balance).to.equal('0', 'Step 0: wrong Relayer Owner TOMO balance')
+                expect((await tomojsO.tomoz.balanceOf({ tokenAddress: token.contractAddress })).balance).to.equal('0', 'Step 0: wrong Relayer Owner Token balance')
                 expect((await tomojsO.tomox.getRelayerByAddress(C.address)).deposit).to.equal('25000000000000000000000', 'Step 0: wrong Relayer Deposit')
 
                 console.log(`Lending ...`)
+
+                await tomojsLA.tomox.createLendingOrder({
+                    relayerAddress: C.address,
+                    lendingToken: token.contractAddress,
+                    collateralToken: tomoNative,
+                    term: term,
+                    interest: 9,
+                    quantity: 1000,
+                    side: 'INVEST',
+                    nonce: 0
+                })
+
+                await tomojsLA.tomox.createLendingOrder({
+                    relayerAddress: C.address,
+                    lendingToken: token.contractAddress,
+                    collateralToken: tomoNative,
+                    term: term,
+                    interest: 10,
+                    quantity: 1000,
+                    side: 'INVEST',
+                    nonce: 1
+                })
+
+                await sleep(5000)
 
                 await tomojsLB.tomox.createLendingOrder({
                     relayerAddress: C.address,
@@ -167,29 +199,6 @@ describe('TomoX testcases', () => {
                 await sleep(5000)
 
 
-                await tomojsLA.tomox.createLendingOrder({
-                    relayerAddress: C.address,
-                    lendingToken: token.contractAddress,
-                    collateralToken: tomoNative,
-                    term: term,
-                    interest: 9,
-                    quantity: 1000,
-                    side: 'INVEST',
-                    nonce: 0
-                })
-
-                await tomojsLA.tomox.createLendingOrder({
-                    relayerAddress: C.address,
-                    lendingToken: token.contractAddress,
-                    collateralToken: tomoNative,
-                    term: term,
-                    interest: 10,
-                    quantity: 1000,
-                    side: 'INVEST',
-                    nonce: 1
-                })
-
-                await sleep(5000)
 
                 let relayer = tomojsO.tomox.getRelayerByAddress(C.address)
 
@@ -199,14 +208,14 @@ describe('TomoX testcases', () => {
                 let borrows = tomojsR.tomox.getBorrows( token.contractAddress, term )
                 let invests = tomojsR.tomox.getInvests( token.contractAddress, term )
 
-                let step1LockAddressTOMOBalance = new BigNumber(await tomojsO.getBalance(lockAddress)).multipliedBy(10 ** 18)
+                let step1LockAddressTOMOBalance = new BigNumber(await tomojsO.getBalance(lockAddress)).multipliedBy(10 ** tokenDecimals)
 
-                expect(step1LockAddressTOMOBalance.minus(step0LockAddressTOMOBalance).dividedBy(10 ** 18).toString(10)).to.equal('150', 'Step 1: wrong lock lending TOMO balance')
+                expect(step1LockAddressTOMOBalance.minus(step0LockAddressTOMOBalance).dividedBy(10 ** tokenDecimals).toString(10)).to.equal('150', 'Step 1: wrong lock lending TOMO balance')
 
                 expect((await tomojsO.tomoz.balanceOf({ tokenAddress: token.contractAddress })).balance).to.equal('10', 'Step 1: wrong owner Token balance')
 
-                expect((await borrows)['850000000'].toString(10)).to.equal('1e+21', 'Step 1: wrong borrows orderbook')
-                expect((await invests)['1000000000'].toString(10)).to.equal('1e+21', 'Step 1: wrong borrows orderbook')
+                expect((await borrows)['850000000'].toString(10)).to.equal((new BigNumber(1000).multipliedBy(10 ** tokenDecimals)).toString(10), 'Step 1: wrong borrows orderbook')
+                expect((await invests)['1000000000'].toString(10)).to.equal((new BigNumber(1000).multipliedBy(10 ** tokenDecimals)).toString(10), 'Step 1: wrong borrows orderbook')
 
                 expect(await tomojsLA.getBalance()).to.equal('0.0', 'Step 1: wrong lender TOMO balance')
                 expect((await tomojsLA.tomoz.balanceOf({ tokenAddress: token.contractAddress })).balance).to.equal('19000', 'Step 1: wrong lender token balance')
