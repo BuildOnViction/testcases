@@ -205,7 +205,7 @@ describe('TomoX testcases', () => {
                 
                 while(true) {
                     let blockNumber = parseInt(await tomojsM.tomo.getBlockNumber())
-                    console.log('Waiting for the recall happens', blockNumber, blockNumber % 900)
+                    console.log('Waiting for the recall happens at', 100 + ((( blockNumber / 900 ) + 1) * 900), 'current block', blockNumber)
                     console.log('TOMO LB', await tomojsLB.getBalance())
                     console.log('Token LB', (await tomojsLB.tomoz.balanceOf({ tokenAddress: token.contractAddress })).balance)
 
