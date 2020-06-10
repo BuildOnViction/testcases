@@ -1,5 +1,35 @@
 {
     "rpc": "http://localhost:8545",
     "rootWalletPkey": "0xxxx",
-    "mainWalletPkey": "0xxxx"
+    "mainWalletPkey": "0xxxx",
+    "bridge": {
+        "blockchain": {
+            "tomoRpc": "",
+            "ethRpc": "",
+            "chainId": ""
+        },
+        "serverAPI": "",
+        "btc": {
+            "confirmations": 2,
+            "decimals": 8,
+            "explorerUrl": "https://www.blockchain.com/btc/",
+            "wrapperAddress": ""
+        },
+        "eth": {
+            "confirmations": 3,
+            "decimals": 18,
+            "explorerUrl": "https://etherscan.io/",
+            "wrapperAddress": ""
+        },
+        "usdt": {
+            "confirmations": 3,
+            "decimals": 6,
+            "explorerUrl": "https://etherscan.io/",
+            "wrapperAddress": ""
+        },
+        "senderUSDTPk": "",
+        "senderETHPk": "",
+        "senderBTCPk": "",
+        "receiverPk": ""
+    }
 }
