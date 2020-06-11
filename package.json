@@ -16,7 +16,7 @@
     "config": "^3.2.4",
     "mocha": "^6.2.2",
     "moment": "^2.24.0",
-    "tomojs": "file:../tomojs",
+    "tomojs": "^1.1.3",
     "url-join": "^4.0.1"
   },
   "devDependencies": {
